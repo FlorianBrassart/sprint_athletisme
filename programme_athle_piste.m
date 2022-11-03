@@ -39,7 +39,7 @@ end
 cc5=contains(fileList,'information');
 file_infos=strcat(path,'\',char(fileList(cc5)));
 INFOS=jsondecode(fileread(file_infos)); % inforamtions du fauteuil utilisées dans les calculs
-rayon_roue=(str2num(INFOS.taille_roues)/39.37)/2;% transformation du diamètre en pouce renseigné par le rayon en metre. 
+rayon_roue=(str2num(INFOS.taille_roues)/1000)/2;% transformation du diamètre en pouce renseigné par le rayon en metre. 
 camber_angle=str2num(INFOS.angle_carossage);
 % dist_roue=str2num(INFOS.largeur_fauteuil_sol);
 
@@ -144,6 +144,7 @@ cadre_eul=unwrap(cadre_eul);
 %%
 Dos_eul=rad2deg(quat2eul([DATADos_struct.quaternion_w DATADos_struct.quaternion_x DATADos_struct.quaternion_y DATADos_struct.quaternion_z],'XYZ'));
 Dos_eul=-(unwrap(Dos_eul));
+% Dos_eul = resample(Dos_eul,1,2);
 % Calcul d'orientation avec la vitesse de rotation du gyrometre
 %% Calcule de l'orientation du fauteil
 
@@ -284,7 +285,9 @@ Disttot = cumtrapz(Vittot/3.6)/FrHZ;
 Distdroite = cumtrapz(Vitdroite/3.6)/FrHZ;
 Distgauche = cumtrapz(Vitgauche/3.6)/FrHZ;
 % orientation du dos
-mvttronc = -(Dos_eul(start : End_event,2) + 110); 
+mvttronc = -((Dos_eul(start : End_event,2))-(mean(Dos_eul(start : End_event,2))))-90; 
+
+%mvttronc = -(Dos_eul(start : End_event,2) + 110); 
 % time
 time_unit = 1/FrHZ;
 time = time_unit : time_unit: time_unit*(size(Vitdroite,1));time = time';
@@ -573,8 +576,8 @@ ylabel('vitesse en Km/h','FontSize',25)
 xlabel('Temps (s)','FontSize',25)
 switch condition
     case 'resistance'
-        xticks(0:2:60)
-        xlim([0 60])
+%         xticks(0:2:60)
+%         xlim([0 60])
     case 'Sprint'
         xticks(0:1:15)
         xlim([0 15])
@@ -695,22 +698,22 @@ tps200m = time(ind_200,1);
         RECAP_sprint=RECAP_sprint';
         
         
-x = Pos_x;
-y = -Pos_y;
+x = Pos_x1(start-300:End_event+500,:);
+y = Pos_y1(start-300:End_event+500,:);
 y(end) = NaN;
-c = DATAmean1;
-[~, Vmaxtot]= max(DATAmean1);
+c = DATAmean1(start-300:End_event+500,:);
+[~, Vmaxtot]= max(c);
 pos_Vmax_x = x(Vmaxtot);
 pos_Vmax_y = y(Vmaxtot);
-pos_start_x = x(start);
-pos_start_y = y(start);
+pos_start_x = x(299);
+pos_start_y = y(299);
 figure(5)
 patch(x, y, c,'EdgeColor','interp','Marker','o','MarkerFaceColor','flat')
-
+axis('equal')
 colorbar;
 hold on 
-plot(pos_Vmax_x,pos_Vmax_y,'Marker','o','MarkerFaceColor','y','linewidth',10)
-plot(pos_start_x,pos_start_y,'Marker','o','MarkerFaceColor','b','linewidth',10)
+plot(pos_start_x,pos_start_y,'Marker','o','Color','b','linewidth',10)
+plot(pos_Vmax_x,pos_Vmax_y,'Marker','o','Color','y','linewidth',10)
 xlabel('Distance en m')
 ylabel('Distance en m')
 text(pos_Vmax_x,pos_Vmax_y,'\leftarrow Vmax','FontSize',14)
